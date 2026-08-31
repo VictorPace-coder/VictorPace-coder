@@ -35,6 +35,8 @@ Le fait qu’un projet existe en interne ne signifie jamais qu’il est publiabl
 
 - Site : https://corvus-solution.com
 - GitHub : https://github.com/VictorPace-coder
+- Linkedin : https://www.linkedin.com/company/corvus-solution/posts/
+- Instagram : https://www.instagram.com/corvus.solution/
 - Localisation : Sète · Occitanie · France
 
 Les futurs dépôts publics seront volontairement peu nombreux : démonstrateurs reproductibles, outils génériques, notes techniques ou briques open source dont la publication apporte une vraie valeur.
