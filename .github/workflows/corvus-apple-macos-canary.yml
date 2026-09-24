@@ -1,0 +1,40 @@
+name: CORVUS Apple macOS Free Canary
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - ".github/workflows/corvus-apple-macos-canary.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  apple-canary:
+    runs-on: macos-15
+    timeout-minutes: 10
+    steps:
+      - name: Collect Apple toolchain receipt
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p receipt
+          {
+            echo "{"
+            echo "  \"schema\": \"corvus.apple.macos.canary.v1\","
+            echo "  \"runner_os\": \"$RUNNER_OS\","
+            echo "  \"runner_arch\": \"$RUNNER_ARCH\","
+            echo "  \"macos\": \"$(sw_vers -productVersion)\","
+            echo "  \"xcode\": \"$(xcodebuild -version | tr '\n' ' ' | sed 's/ *$//')\","
+            echo "  \"swift\": \"$(swift --version | head -1 | sed 's/\"/\\\"/g')\","
+            echo "  \"decision\": \"PASS\""
+            echo "}"
+          } > receipt/corvus_apple_macos_canary.json
+          cat receipt/corvus_apple_macos_canary.json
+
+      - name: Upload receipt
+        uses: actions/upload-artifact@v4
+        with:
+          name: corvus-apple-macos-canary
+          path: receipt/corvus_apple_macos_canary.json
+          retention-days: 1
