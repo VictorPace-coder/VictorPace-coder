@@ -11,7 +11,11 @@ permissions:
 
 jobs:
   apple-canary:
-    runs-on: macos-15
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-15, macos-26]
+    runs-on: ${{ matrix.os }}
     timeout-minutes: 10
     steps:
       - name: Collect Apple toolchain receipt
@@ -19,9 +23,11 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p receipt
+          SAFE_OS="$(echo "${{ matrix.os }}" | tr '/' '-')"
           {
             echo "{"
-            echo "  \"schema\": \"corvus.apple.macos.canary.v1\","
+            echo "  \"schema\": \"corvus.apple.macos.canary.v2\","
+            echo "  \"runner_label\": \"${{ matrix.os }}\","
             echo "  \"runner_os\": \"$RUNNER_OS\","
             echo "  \"runner_arch\": \"$RUNNER_ARCH\","
             echo "  \"macos\": \"$(sw_vers -productVersion)\","
@@ -29,12 +35,12 @@ jobs:
             echo "  \"swift\": \"$(swift --version | head -1 | sed 's/\"/\\\"/g')\","
             echo "  \"decision\": \"PASS\""
             echo "}"
-          } > receipt/corvus_apple_macos_canary.json
-          cat receipt/corvus_apple_macos_canary.json
+          } > "receipt/corvus_apple_macos_canary_${SAFE_OS}.json"
+          cat "receipt/corvus_apple_macos_canary_${SAFE_OS}.json"
 
       - name: Upload receipt
         uses: actions/upload-artifact@v4
         with:
-          name: corvus-apple-macos-canary
-          path: receipt/corvus_apple_macos_canary.json
+          name: corvus-apple-macos-canary-${{ matrix.os }}
+          path: receipt/*.json
           retention-days: 1
