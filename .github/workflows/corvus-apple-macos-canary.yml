@@ -18,21 +18,40 @@ jobs:
     runs-on: ${{ matrix.os }}
     timeout-minutes: 10
     steps:
+      - name: Compile native iOS simulator canary
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > /tmp/CorvusAppleCanary.swift <<'SWIFT'
+          public struct CorvusAppleCanary {
+              public static let e2e = "CORVUS_APPLE_IOS_COMPILE_OK"
+          }
+          SWIFT
+          IOS_SIM_SDK="$(xcrun --sdk iphonesimulator --show-sdk-version)"
+          xcrun --sdk iphonesimulator swiftc             -target "arm64-apple-ios${IOS_SIM_SDK}-simulator"             -parse-as-library             -emit-object /tmp/CorvusAppleCanary.swift             -o /tmp/CorvusAppleCanary.o
+          test -s /tmp/CorvusAppleCanary.o
+          file /tmp/CorvusAppleCanary.o
+
       - name: Collect Apple toolchain receipt
         shell: bash
         run: |
           set -euo pipefail
           mkdir -p receipt
           SAFE_OS="$(echo "${{ matrix.os }}" | tr '/' '-')"
+          IOS_SIM_SDK="$(xcrun --sdk iphonesimulator --show-sdk-version)"
+          IOS_DEVICE_SDK="$(xcrun --sdk iphoneos --show-sdk-version)"
           {
             echo "{"
-            echo "  \"schema\": \"corvus.apple.macos.canary.v2\","
+            echo "  \"schema\": \"corvus.apple.macos.canary.v3\","
             echo "  \"runner_label\": \"${{ matrix.os }}\","
             echo "  \"runner_os\": \"$RUNNER_OS\","
             echo "  \"runner_arch\": \"$RUNNER_ARCH\","
             echo "  \"macos\": \"$(sw_vers -productVersion)\","
             echo "  \"xcode\": \"$(xcodebuild -version | tr '\n' ' ' | sed 's/ *$//')\","
             echo "  \"swift\": \"$(swift --version | head -1 | sed 's/\"/\\\"/g')\","
+            echo "  \"ios_simulator_sdk\": \"${IOS_SIM_SDK}\","
+            echo "  \"ios_device_sdk\": \"${IOS_DEVICE_SDK}\","
+            echo "  \"native_ios_compile\": \"PASS\","
             echo "  \"decision\": \"PASS\""
             echo "}"
           } > "receipt/corvus_apple_macos_canary_${SAFE_OS}.json"
